@@ -11,7 +11,7 @@ urlpatterns = [
     path('', include('blog.urls')),
     path('pages/', include('pages.urls')),
     path('auth/', include('django.contrib.auth.urls')),
-        path(
+    path(
         'auth/registration/',
         CreateView.as_view(
             template_name='registration/registration_form.html',
@@ -22,5 +22,5 @@ urlpatterns = [
     ),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-handler404 = 'pages.views.page_not_found' 
+handler404 = 'pages.views.page_not_found'
 handler500 = 'pages.views.internal_server_error'

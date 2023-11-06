@@ -6,6 +6,7 @@ from blog.const import STR_LENGTH as SL
 
 User = get_user_model()
 
+
 class PublishedModel(models.Model):
     is_published = models.BooleanField(
         'Опубликовано',
@@ -84,6 +85,7 @@ class Post(PublishedModel):
         upload_to='birthdays_images',
         blank=True
     )
+
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
@@ -91,6 +93,7 @@ class Post(PublishedModel):
 
     def __str__(self):
         return self.title[0:SL]
+
 
 class Comment(models.Model):
     text = models.TextField('Текст комментария')
