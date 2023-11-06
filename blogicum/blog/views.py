@@ -105,7 +105,7 @@ class ProfileListView(ListView):
         return context
 
 
-class ProfileUpdateView(UpdateView, LoginRequiredMixin):
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserUpdateForm
     template_name = 'blog/user.html'
@@ -123,7 +123,7 @@ class ProfileUpdateView(UpdateView, LoginRequiredMixin):
         return reverse_lazy('blog:index')
 
 
-class PostCreateView(CreateView, LoginRequiredMixin):
+class PostCreateView(LoginRequiredMixin, CreateView):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
@@ -163,7 +163,7 @@ class PostMixin:
         )
 
 
-class PostUpdateView(PostMixin, UpdateView):
+class PostUpdateView(LoginRequiredMixin, PostMixin, UpdateView):
     ...
 
 
