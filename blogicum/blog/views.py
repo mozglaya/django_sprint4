@@ -148,9 +148,10 @@ class PostMixin:
     def dispatch(self, request, *args, **kwargs):
         self.parent_post = get_object_or_404(
             Post,
-            pk=kwargs['post_id'],
-            author=request.user
+            pk=kwargs['post_id']
         )
+        if request.user != self.parent_post.author:
+            return redirect('blog:post_detail', post_id=kwargs['post_id'])
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
@@ -168,6 +169,14 @@ class PostUpdateView(LoginRequiredMixin, PostMixin, UpdateView):
 
 
 class PostDeleteView(LoginRequiredMixin, PostMixin, DeleteView):
+
+    def dispatch(self, request, *args, **kwargs):
+        self.parent_post = get_object_or_404(
+            Post,
+            pk=kwargs['post_id'],
+            author=request.user
+        )
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
