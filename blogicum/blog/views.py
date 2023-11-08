@@ -1,5 +1,3 @@
-from typing import Any
-from django import http
 from django.db.models import Count
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404, redirect, render
@@ -14,6 +12,7 @@ from blog.models import Category, Post, Comment
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.http import Http404
 
 
 User = get_user_model()
@@ -48,15 +47,6 @@ class PostDetailView(DetailView):
     pk_url_kwarg = 'post_id'
     template_name = 'blog/detail.html'
 
-    def dispatch(self, request, *args, **kwargs):
-        self.parent_post = get_object_or_404(
-            Post,
-            pk=kwargs['post_id']
-        )
-        if request.user != self.parent_post.author and not self.parent_post.is_published:
-            return redirect('blog:index')
-        return super().dispatch(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         post = get_object_or_404(Post, id=self.kwargs['post_id'])
@@ -65,6 +55,13 @@ class PostDetailView(DetailView):
         context['comments'] = (
             self.object.comments.select_related('author')
         )
+        if self.request.user != post.author and not post.is_published:
+            raise Http404
+        elif (self.request.user != post.author
+              and not post.category.is_published):
+            raise Http404
+        elif self.request.user != post.author and post.pub_date >= now():
+            raise Http404
         return context
 
 
@@ -158,19 +155,10 @@ class PostMixin:
     pk_url_kwarg = 'post_id'
     parent_post = None
 
-    # def dispatch(self, request, *args, **kwargs):
-    #     self.parent_post = get_object_or_404(
-    #         Post,
-    #         pk=kwargs['post_id']
-    #     )
-    #     if request.user != self.parent_post.author:
-    #         return redirect('blog:post_detail', post_id=kwargs['post_id'])
-    #     return super().dispatch(request, *args, **kwargs)
-
     def form_valid(self, form):
         form.instance.post = self.parent_post
         return super().form_valid(form)
- 
+
     def get_success_url(self):
         return reverse_lazy(
             'blog:post_detail', kwargs={'post_id': self.parent_post.pk}
@@ -190,14 +178,6 @@ class PostUpdateView(LoginRequiredMixin, PostMixin, UpdateView):
 
 
 class PostDeleteView(LoginRequiredMixin, PostMixin, DeleteView):
-
-    # def dispatch(self, request, *args, **kwargs):
-    #     self.parent_post = get_object_or_404(
-    #         Post,
-    #         pk=kwargs['post_id'],
-    #         author=request.user
-    #     )
-    #     return super().dispatch(request, *args, **kwargs)
 
     def dispatch(self, request, *args, **kwargs):
         self.parent_post = get_object_or_404(
