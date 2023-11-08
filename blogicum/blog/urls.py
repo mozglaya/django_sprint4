@@ -7,7 +7,7 @@ urlpatterns = [
     path('', views.IndexListView.as_view(), name='index'),
     path(
         'posts/<int:post_id>/',
-        views.BirthdayDetailView.as_view(),
+        views.PostDetailView.as_view(),
         name='post_detail'
     ),
     path(

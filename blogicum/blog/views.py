@@ -1,3 +1,5 @@
+from typing import Any
+from django import http
 from django.db.models import Count
 from django.utils.timezone import now
 from django.shortcuts import get_object_or_404, redirect, render
@@ -40,14 +42,25 @@ class IndexListView(ListView):
         return context
 
 
-class BirthdayDetailView(DetailView):
+class PostDetailView(DetailView):
     model = Post
     pk_field = 'post_id'
     pk_url_kwarg = 'post_id'
     template_name = 'blog/detail.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        self.parent_post = get_object_or_404(
+            Post,
+            pk=kwargs['post_id']
+        )
+        if request.user != self.parent_post.author and not self.parent_post.is_published:
+            return redirect('blog:index')
+        return super().dispatch(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        post = get_object_or_404(Post, id=self.kwargs['post_id'])
+        context['post'] = post
         context['form'] = CommentForm()
         context['comments'] = (
             self.object.comments.select_related('author')
@@ -145,6 +158,27 @@ class PostMixin:
     pk_url_kwarg = 'post_id'
     parent_post = None
 
+    # def dispatch(self, request, *args, **kwargs):
+    #     self.parent_post = get_object_or_404(
+    #         Post,
+    #         pk=kwargs['post_id']
+    #     )
+    #     if request.user != self.parent_post.author:
+    #         return redirect('blog:post_detail', post_id=kwargs['post_id'])
+    #     return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.post = self.parent_post
+        return super().form_valid(form)
+ 
+    def get_success_url(self):
+        return reverse_lazy(
+            'blog:post_detail', kwargs={'post_id': self.parent_post.pk}
+        )
+
+
+class PostUpdateView(LoginRequiredMixin, PostMixin, UpdateView):
+
     def dispatch(self, request, *args, **kwargs):
         self.parent_post = get_object_or_404(
             Post,
@@ -154,28 +188,24 @@ class PostMixin:
             return redirect('blog:post_detail', post_id=kwargs['post_id'])
         return super().dispatch(request, *args, **kwargs)
 
-    def form_valid(self, form):
-        form.instance.post = self.parent_post
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:post_detail', kwargs={'post_id': self.parent_post.pk}
-        )
-
-
-class PostUpdateView(LoginRequiredMixin, PostMixin, UpdateView):
-    ...
-
 
 class PostDeleteView(LoginRequiredMixin, PostMixin, DeleteView):
+
+    # def dispatch(self, request, *args, **kwargs):
+    #     self.parent_post = get_object_or_404(
+    #         Post,
+    #         pk=kwargs['post_id'],
+    #         author=request.user
+    #     )
+    #     return super().dispatch(request, *args, **kwargs)
 
     def dispatch(self, request, *args, **kwargs):
         self.parent_post = get_object_or_404(
             Post,
-            pk=kwargs['post_id'],
-            author=request.user
+            pk=kwargs['post_id']
         )
+        if request.user != self.parent_post.author:
+            return redirect('blog:index')
         return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
