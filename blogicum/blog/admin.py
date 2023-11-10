@@ -1,8 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import Group
-
-from .models import Category, Location, Post, User
+from .models import Category, Comment, Location, Post, User
 
 admin.site.empty_value_display = 'Не задано'
 
@@ -10,6 +9,7 @@ admin.site.unregister(User)
 admin.site.unregister(Group)
 
 
+@admin.register(User)
 class AdminUser(BaseUserAdmin):
     @admin.display(description='Кол-во постов у пользователя')
     def posts_count(self, obj):
@@ -30,6 +30,7 @@ class PostInline(admin.StackedInline):
     extra = 0
 
 
+@admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     inlines = (
         PostInline,
@@ -39,6 +40,7 @@ class CategoryAdmin(admin.ModelAdmin):
     )
 
 
+@admin.register(Post)
 class PostAdmin(admin.ModelAdmin):
     list_display = (
         'title',
@@ -47,6 +49,7 @@ class PostAdmin(admin.ModelAdmin):
         'category',
         'location',
         'author',
+        'image_tag',
     )
     list_editable = (
         'is_published',
@@ -56,10 +59,17 @@ class PostAdmin(admin.ModelAdmin):
     search_fields = ('title',)
     list_filter = ('category',)
     list_display_links = ('title', 'author',)
+    readonly_fields = ['image_tag']
 
 
-admin.site.register(Post, PostAdmin)
-admin.site.register(Category, CategoryAdmin)
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'text',
+        'post',
+        'author',
+    )
+    list_display_links = ('author',)
+
 
 admin.site.register(Location)
-admin.site.register(User, AdminUser)

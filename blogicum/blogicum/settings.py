@@ -9,6 +9,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
+    'www.mozglaya.pythonanywhere.com',
+    'mozglaya.pythonanywhere.com',
 ]
 
 CSRF_FAILURE_VIEW = 'pages.views.csrf_failure'
