@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
-from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.shortcuts import redirect
+from django.urls import reverse_lazy, reverse
 
 from .models import Post, Comment
 from .forms import PostForm, CommentForm
@@ -8,8 +8,7 @@ from .forms import PostForm, CommentForm
 
 class AuthorCheckMixin(UserPassesTestMixin):
     def test_func(self):
-        obj = self.get_object()
-        return obj.author == self.request.user
+        return self.get_object().author == self.request.user
 
 
 class PostMixin(LoginRequiredMixin, AuthorCheckMixin):
@@ -19,7 +18,7 @@ class PostMixin(LoginRequiredMixin, AuthorCheckMixin):
     pk_url_kwarg = 'post_id'
 
     def handle_no_permission(self):
-        return redirect('blog:post_detail', post_id=self.get_object().pk)
+        return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -27,12 +26,13 @@ class PostMixin(LoginRequiredMixin, AuthorCheckMixin):
         return context
 
     def get_success_url(self):
-        return reverse_lazy('blog:profile',
-                            kwargs={'username': self.request.user.username}
-                            )
+        return reverse_lazy(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
 
 
-class CommentMixin(LoginRequiredMixin, AuthorCheckMixin):
+class CommentMixin(LoginRequiredMixin):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment.html'
@@ -40,9 +40,6 @@ class CommentMixin(LoginRequiredMixin, AuthorCheckMixin):
     parent_post = None
 
     def get_success_url(self):
-        self.parent_post = get_object_or_404(
-            Post, pk=self.kwargs['post_id'], is_published=True
-        )
-        return reverse_lazy(
-            'blog:post_detail', kwargs={'post_id': self.parent_post.pk}
+        return reverse(
+            'blog:post_detail', kwargs={'post_id': self.kwargs['post_id']}
         )

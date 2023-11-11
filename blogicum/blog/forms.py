@@ -1,3 +1,5 @@
+from django.utils.timezone import now, localtime
+
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 
@@ -11,6 +13,11 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 class PostForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['pub_date'].initial = localtime(
+            now()
+        ).strftime('%Y-%m-%dT%H:%M')
 
     class Meta:
         model = Post
@@ -20,16 +27,10 @@ class PostForm(forms.ModelForm):
             (attrs={
                 'type': 'datetime-local',
                 'class': 'form-control',
-                'format': "%d/%m/%Y %H:%M:%S",
+                'format': '%Y-%m-%dT%H:%M',
             }
             )
         }
-
-    def __init__(self, *args, **kwargs):
-        super(PostForm, self).__init__(*args, **kwargs)
-        self.fields['pub_date'].input_format = ['%d/%m/%Y %H:%M:%S']
-# Не уверена, что так правильно,
-# но при нажатии на виджет можно выбрать "Сегодня" и все отображается верно.
 
 
 class UserUpdateForm(forms.ModelForm):

@@ -26,7 +26,7 @@ class PublishedCreatedModel(CreatedAt):
         help_text='Снимите галочку, чтобы скрыть публикацию.'
     )
 
-    class Meta:
+    class Meta(CreatedAt.Meta):
         abstract = True
 
 
@@ -41,7 +41,7 @@ class Category(PublishedCreatedModel):
                   'цифры, дефис и подчёркивание.'
     )
 
-    class Meta:
+    class Meta(PublishedCreatedModel.Meta):
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
@@ -52,7 +52,7 @@ class Category(PublishedCreatedModel):
 class Location(PublishedCreatedModel):
     name = models.CharField('Название места', max_length=MLF)
 
-    class Meta(CreatedAt.Meta):
+    class Meta(PublishedCreatedModel.Meta):
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
 
@@ -126,6 +126,9 @@ class Comment(CreatedAt):
         verbose_name='Автор комментария',
     )
 
-    class Meta:
+    class Meta(CreatedAt.Meta):
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return self.text[:SL]
