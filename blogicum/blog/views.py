@@ -13,7 +13,7 @@ from .forms import (
     PostForm, UserUpdateForm, CommentForm, CustomUserCreationForm
 )
 from .mixins import PostMixin, CommentMixin, AuthorCheckMixin
-from .services import annotate, filter
+from .services import annotate_post_with_comments, filter_posted_posts
 
 
 class RegistrationCreateView(CreateView):
@@ -26,7 +26,7 @@ class IndexListView(ListView):
     model = Post
     template_name = 'blog/index.html'
     paginate_by = PL
-    queryset = annotate(filter(Post.objects))
+    queryset = annotate_post_with_comments(filter_posted_posts(Post.objects))
 
 
 class CategoryListView(ListView):
@@ -41,7 +41,9 @@ class CategoryListView(ListView):
         )
 
     def get_queryset(self):
-        return annotate(filter(self.get_object().posts))
+        return annotate_post_with_comments(
+            filter_posted_posts(self.get_object().posts)
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -62,11 +64,9 @@ class ProfileListView(ListView):
 
     def get_queryset(self):
         profile = self.get_object()
-        posts = annotate(profile.posts.filter(
-            author_id=profile.pk
-        ))
+        posts = annotate_post_with_comments(profile.posts)
         if self.request.user != profile:
-            posts = filter(posts)
+            posts = filter_posted_posts(posts)
         return posts
 
     def get_context_data(self, **kwargs):
@@ -113,7 +113,7 @@ class PostDetailView(ListView):
     paginate_by = PL
 
     def get_object(self):
-        post = get_object_or_404(Post, id=self.kwargs['post_id'])
+        post = get_object_or_404(Post, id=self.kwargs[self.pk_url_kwarg])
         if self.request.user != post.author and (
             post.pub_date > now() or not post.is_published
         ):
@@ -132,9 +132,10 @@ class PostDetailView(ListView):
 
 class PostUpdateView(PostMixin, UpdateView):
     def get_success_url(self):
-        return reverse_lazy('blog:post_detail',
-                            kwargs={'post_id': self.get_object().pk}
-                            )
+        return reverse_lazy(
+            'blog:post_detail',
+            kwargs={self.pk_url_kwarg: self.get_object().pk}
+        )
 
 
 class PostDeleteView(PostMixin, DeleteView):

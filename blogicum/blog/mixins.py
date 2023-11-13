@@ -18,7 +18,10 @@ class PostMixin(LoginRequiredMixin, AuthorCheckMixin):
     pk_url_kwarg = 'post_id'
 
     def handle_no_permission(self):
-        return redirect('blog:post_detail', post_id=self.kwargs['post_id'])
+        return redirect(
+            'blog:post_detail',
+            post_id=self.kwargs[self.pk_url_kwarg]
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -36,7 +39,7 @@ class CommentMixin(LoginRequiredMixin):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment.html'
-    pk_url_kwarg = 'post_id'
+    pk_url_kwarg = 'comment_id'
     parent_post = None
 
     def get_success_url(self):

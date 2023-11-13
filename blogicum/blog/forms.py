@@ -1,5 +1,4 @@
 from django.utils.timezone import now, localtime
-
 from django.contrib.auth.forms import UserCreationForm
 from django import forms
 
